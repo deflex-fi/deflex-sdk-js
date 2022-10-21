@@ -1,0 +1,6 @@
+# build output
+dist
+node_modules
+.npmignore
+.idea
+package-lock.json
