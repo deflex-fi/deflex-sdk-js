@@ -12,8 +12,19 @@ export default class DeflexQuote {
     public quotes: Array<DEXQuote>
     public requiredAppOptIns: Array<Number>
     public txnPayload: Object|null
+    public protocolFees: {[key: string]: Number }
+    public flattenedRoute: {[key: string]: Number}
 
-    constructor(quote, profitAmount, profitASAID, priceBaseline, route, quotes, requiredAppOptIns, txnPayload) {
+    constructor(quote,
+                profitAmount,
+                profitASAID,
+                priceBaseline,
+                route,
+                quotes,
+                requiredAppOptIns,
+                txnPayload,
+                protocolFees,
+                flattenedRoute) {
         this.quote = quote
         this.profitAmount = profitAmount
         this.profitASAID = profitASAID
@@ -22,6 +33,8 @@ export default class DeflexQuote {
         this.quotes = quotes
         this.requiredAppOptIns = requiredAppOptIns
         this.txnPayload = txnPayload
+        this.protocolFees = protocolFees
+        this.flattenedRoute = flattenedRoute
     }
 
     static fromAPIResponse(apiResponse) : DeflexQuote {
@@ -33,7 +46,9 @@ export default class DeflexQuote {
             apiResponse.route.map((_route) => DeflexRoute.fromApiResponse(_route)),
             apiResponse.quotes.map((quote) => DEXQuote.fromApiResponse(quote)),
             apiResponse.requiredAppOptIns,
-            apiResponse.quote === '' ? null : apiResponse.txnPayload
+            apiResponse.quote === '' ? null : apiResponse.txnPayload,
+            apiResponse.protocolFees,
+            apiResponse.flattenedRoute
         )
     }
 
