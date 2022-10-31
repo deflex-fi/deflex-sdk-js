@@ -36,29 +36,15 @@ export default class DeflexLimitOrderFillerClient {
     }
 
     static async fetchAllOpenOrders(indexer: Indexer, chain: string, registryAppId?: number) : Promise<LimitOrderParams[]> {
-        if (!registryAppId) {
-            registryAppId = RegistryAppAPI.getAppId(chain)
-        }
-        let accounts = []
-        let nextToken = null
-        while (true) {
-            const appInfo = await indexer.searchAccounts()
-                .applicationID(registryAppId)
-                .limit(100)
-                .nextToken(nextToken)
-                .do()
-            accounts = [...accounts, ...appInfo['accounts']]
-            if ('next-token' in appInfo) {
-                nextToken = appInfo['next-token']
-            } else {
-                break
-            }
-        }
-        const limitOrders = accounts.map((account) => DeflexLimitOrderFillerClient.limitOrderFromAccount(account))
+        const limitOrders = await fetchAllOrders(indexer, chain, registryAppId)
         const now = (new Date()).getTime() / 1000
         return limitOrders.filter((order) => now <= order.expirationDate)
+    }
 
-
+    static async fetchAllExpiredOrders(indexer: Indexer, chain: string, registryAppId?: number): Promise<LimitOrderParams[]> {
+        const limitOrders = await fetchAllOrders(indexer, chain, registryAppId)
+        const now = (new Date()).getTime() / 1000
+        return limitOrders.filter((order) => now > order.expirationDate)
     }
 
     static limitOrderFromAccount(account: object) : LimitOrderParams {
@@ -216,7 +202,27 @@ export default class DeflexLimitOrderFillerClient {
         })
         return composer
     }
+}
 
-
-
+async function fetchAllOrders(indexer: Indexer, chain: string, registryAppId ?: number):
+    Promise<LimitOrderParams[]> {
+    if (!registryAppId) {
+        registryAppId = RegistryAppAPI.getAppId(chain)
+    }
+    let accounts = []
+    let nextToken = null
+    while (true) {
+        const appInfo = await indexer.searchAccounts()
+            .applicationID(registryAppId)
+            .limit(100)
+            .nextToken(nextToken)
+            .do()
+        accounts = [...accounts, ...appInfo['accounts']]
+        if ('next-token' in appInfo) {
+            nextToken = appInfo['next-token']
+        } else {
+            break
+        }
+    }
+    return accounts.map((account) => DeflexLimitOrderFillerClient.limitOrderFromAccount(account))
 }
