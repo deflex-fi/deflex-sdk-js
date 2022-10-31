@@ -13,10 +13,11 @@ async function run() {
 	const requiredAppOptIns = quote.requiredAppOptIns
 
 	// opt into required app for swap
+	const accountInfo = await algod.accountInformation(sender.addr).do()
+	const optedInAppIds = 'apps-local-state' in accountInfo ? accountInfo['apps-local-state'].map((state) => parseInt(state.id)) : []
 	for (let i = 0; i < requiredAppOptIns.length; i++) {
 		const requiredAppId = requiredAppOptIns[i]
-		const accountInfo = await algod.accountApplicationInformation(sender.addr, requiredAppId).do()
-		if (!('app-local-state' in accountInfo)) {
+		if (!optedInAppIds.includes(requiredAppId)) {
 			const appOptInTxn = algosdk.makeApplicationOptInTxn(sender.addr, params, requiredAppId)
 			const signedTxn = appOptInTxn.signTxn(sender.sk)
 			await algod
