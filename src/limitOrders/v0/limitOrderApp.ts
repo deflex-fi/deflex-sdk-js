@@ -1,16 +1,16 @@
 import {CHAIN_MAINNET} from "../../constants";
 
-export const GLOBAL_STATE_INTS = 6
+export const GLOBAL_STATE_INTS = 5
 export const GLOBAL_STATE_BYTES = 0
 
-export const LOCAL_STATE_INTS = 10
+export const LOCAL_STATE_INTS = 9
 export const LOCAL_STATE_BYTES = 5
 
 export const EXTRA_PROGRAM_PAGES = 1
 
 export const MINIMUM_BALANCE_FOR_OPT_IN = 100000 +
     (25000 + 3500) * LOCAL_STATE_INTS +
-    (25000 + 25500) * LOCAL_STATE_BYTES
+    (25000 + 25000) * LOCAL_STATE_BYTES
 
 export const MINIMUM_BALANCE_FOR_ACCOUNT = 100000
 
