@@ -6,6 +6,7 @@ export const USER_OPT_INTO_ASSETS = 'User_opt_into_assets'
 export const USER_OPT_OUT_ASSETS = 'User_opt_out_assets'
 export const USER_CREATE_ORDER = 'User_create_order'
 export const USER_CANCEL_ORDER = 'User_cancel_order'
+export const USER_DELETE_APP = 'User_delete_app'
 export const BACKEND_FILL_ORDER_INITIALIZE = 'Backend_fill_order_initialize'
 export const BACKEND_FILL_ORDER_FINALIZE = 'Backend_fill_order_finalize'
 

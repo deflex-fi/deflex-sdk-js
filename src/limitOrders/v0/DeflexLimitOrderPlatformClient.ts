@@ -24,6 +24,7 @@ import LimitOrderApp, {
 import LimitOrderAppAPI, {
 	USER_CANCEL_ORDER,
 	USER_CREATE_ORDER,
+	USER_DELETE_APP,
 	USER_INITIALIZE,
 	USER_OPT_INTO_ASSETS,
 	USER_OPT_OUT_ASSETS
@@ -357,17 +358,17 @@ export default class DeflexLimitOrderPlatformClient {
 	async prepareDeleteLimitOrderApp(limitOrderAppId: number): Promise<AtomicTransactionComposer> {
 		const composer = new AtomicTransactionComposer()
 		const params = await this.algod.getTransactionParams().do()
-		composer.addTransaction({
-			txn: makeApplicationDeleteTxnFromObject({
-				from: this.userAddress,
-				suggestedParams: params,
-				appIndex: limitOrderAppId,
-				rekeyTo: undefined,
-				accounts: [],
-				foreignApps: [],
-				foreignAssets: [],
-			}),
-			signer: this.signer
+		const deleteParams = {...params}
+		deleteParams.fee = 2000
+		deleteParams.flatFee = true
+		composer.addMethodCall({
+			appID: limitOrderAppId,
+			method: LimitOrderAppAPI.getMethod(USER_DELETE_APP),
+			sender: this.userAddress,
+			suggestedParams: deleteParams,
+			signer: this.signer,
+			methodArgs: [],
+			onComplete: OnApplicationComplete.DeleteApplicationOC,
 		})
 		return composer
 	}
