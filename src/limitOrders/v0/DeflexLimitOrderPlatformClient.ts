@@ -61,7 +61,6 @@ export default class DeflexLimitOrderPlatformClient {
 	static getMinimumEscrowBalance() : number {
 		let balance = 100000 // minimum for any account
 		balance += 100000 // to opt into registry app
-		balance += 1_000 // to opt the escrow into the limit order app
 		balance += MINIMUM_BALANCE_FOR_OPT_IN
 		return balance
 	}
@@ -132,10 +131,16 @@ export default class DeflexLimitOrderPlatformClient {
 		const escrowSigner = makeBasicAccountTransactionSigner(escrowAccount)
 
 		// fund the escrow
+
+		let escrowFundParams = {...params}
+		// we pay 2*fee from the user to cover for the registry-optin
+		escrowFundParams.fee = 2000
+		escrowFundParams.flatFee = true
+
 		composer.addTransaction({
 			txn: makePaymentTxnWithSuggestedParamsFromObject({
 				from: limitOrder.userAddress,
-				suggestedParams: params,
+				suggestedParams: escrowFundParams,
 				to: escrowAccount.addr,
 				amount: DeflexLimitOrderPlatformClient.getMinimumEscrowBalance(),
 				note: (new TextEncoder()).encode('escrow_fund'),
@@ -192,10 +197,15 @@ export default class DeflexLimitOrderPlatformClient {
 		})
 
 		// opt the escrow into the limit order app
+
+		let escrowOptInParams = {...params}
+		escrowOptInParams.fee = 0
+		escrowOptInParams.flatFee = true
+
 		const escrowOptInTxn = {
 			txn: makeApplicationOptInTxnFromObject({
 				from: limitOrder.escrowAddress,
-				suggestedParams: params,
+				suggestedParams: escrowOptInParams,
 				appIndex: limitOrder.limitOrderAppId,
 				rekeyTo: getApplicationAddress(limitOrder.limitOrderAppId),
 				accounts: [],
