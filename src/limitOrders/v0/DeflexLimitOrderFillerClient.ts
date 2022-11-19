@@ -62,11 +62,11 @@ export default class DeflexLimitOrderFillerClient {
                     limitOrderState[keyValue['key']] = keyValue['value']
                 }
                 return new LimitOrderParams(
-                    encodeAddress(getStateBytes(limitOrderState, 'user')),
-                    encodeAddress(getStateBytes(limitOrderState, 'beneficiary')),
+                    encodeAddress(getStateBytes(limitOrderState, 'user_address')),
+                    encodeAddress(getStateBytes(limitOrderState, 'beneficiary_address')),
                     appId,
                     getStateInt(limitOrderState, 'registry_app_id'),
-                    encodeAddress(getStateBytes(limitOrderState, 'platform_treasury')),
+                    encodeAddress(getStateBytes(limitOrderState, 'platform_treasury_address')),
                     getStateInt(limitOrderState, 'asset_in_id'),
                     getStateInt(limitOrderState, 'asset_out_id'),
                     getStateInt(limitOrderState, 'amount_in'),

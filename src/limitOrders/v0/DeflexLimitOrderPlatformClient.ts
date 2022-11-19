@@ -204,13 +204,13 @@ export default class DeflexLimitOrderPlatformClient {
 			signer: escrowSigner,
 		}
 
-		// send 0.1 ALGO as compensation for network fees
+		// send 0.05 ALGO as compensation for network fees
 		const networkFeeTxn = {
 			txn: makePaymentTxnWithSuggestedParamsFromObject({
 				from: this.userAddress,
 				suggestedParams: params,
 				to: getApplicationAddress(limitOrder.limitOrderAppId),
-				amount: 100000,
+				amount: 50000,
 				note: (new TextEncoder()).encode('network_fee'),
 				rekeyTo: undefined
 			}),
