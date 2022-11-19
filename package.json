@@ -1,6 +1,6 @@
 {
   "name": "@deflex/deflex-sdk-js",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Deflex JS SDK",
   "main": "dist/index.js",
   "module": "dist/index.js",
