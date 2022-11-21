@@ -32,7 +32,6 @@ import LimitOrderAppAPI, {
 import LimitOrderParams from "./LimitOrderParams";
 import {ALGO_ASSET_ID, CHAIN_MAINNET, CHAIN_TESTNET} from "../../constants";
 import RegistryAppAPI, {BACKEND_CLOSE_ESCROW} from "./registryAppAPI";
-import {isOptedIntoAsset} from "./util";
 
 export default class DeflexLimitOrderPlatformClient {
 
@@ -150,58 +149,52 @@ export default class DeflexLimitOrderPlatformClient {
 			signer: this.signer,
 		})
 
-		const limitOrderAppAddress = getApplicationAddress(limitOrder.limitOrderAppId)
-		const limitOrderOptedIntoInput = await isOptedIntoAsset(this.algod, limitOrderAppAddress, limitOrder.assetInId)
-		const limitOrderOptedIntoOutput = await isOptedIntoAsset(this.algod, limitOrderAppAddress, limitOrder.assetOutId)
-
 		// opt the limit order app into the necessary assets
 		let assetIds = []
-		if (!limitOrderOptedIntoInput) {
+		if (limitOrder.assetInId !== ALGO_ASSET_ID) {
 			assetIds.push(limitOrder.assetInId)
 		}
-		if (!limitOrderOptedIntoOutput) {
+		if (limitOrder.assetOutId !== ALGO_ASSET_ID) {
 			assetIds.push(limitOrder.assetOutId)
 		}
 
-		if (assetIds.length > 0) {
-			// payment txn to increase the minimum balance of the limit order app
-			const minBalanceTxn = {
-				txn: makePaymentTxnWithSuggestedParamsFromObject({
-					from: this.userAddress,
-					suggestedParams: params,
-					to: getApplicationAddress(limitOrder.limitOrderAppId),
-					amount: 100000 * assetIds.length,
-					note: (new TextEncoder()).encode('minimum_balance'),
-					rekeyTo: undefined
-				}),
-				signer: this.signer,
-			}
-			// opt the limit order app into the assets
-			let optInParams = {...params}
-			optInParams.fee = 1000 * (1 + assetIds.length)
-			optInParams.flatFee = true
-			temporaryComposer.addMethodCall({
-				appID: limitOrder.limitOrderAppId,
-				method: LimitOrderAppAPI.getMethod(USER_OPT_INTO_ASSETS),
-				sender: this.userAddress,
-				suggestedParams: optInParams,
-				signer: this.signer,
-				methodArgs: [minBalanceTxn],
-				onComplete: OnApplicationComplete.NoOpOC,
-			})
-			const txns = temporaryComposer.buildGroup().map((txnAndSigner) => txnAndSigner.txn)
-			txns[1].appForeignAssets = assetIds
-			delete (txns[0].group)
-			delete (txns[1].group)
-			composer.addTransaction({
-				txn: txns[0],
-				signer: this.signer
-			})
-			composer.addTransaction({
-				txn: txns[1],
-				signer: this.signer
-			})
+		// payment txn to increase the minimum balance of the limit order app
+		const minBalanceTxn = {
+			txn: makePaymentTxnWithSuggestedParamsFromObject({
+				from: this.userAddress,
+				suggestedParams: params,
+				to: getApplicationAddress(limitOrder.limitOrderAppId),
+				amount: 100000 * assetIds.length,
+				note: (new TextEncoder()).encode('minimum_balance'),
+				rekeyTo: undefined
+			}),
+			signer: this.signer,
 		}
+		// opt the limit order app into the assets
+		let optInParams = {...params}
+		optInParams.fee = 1000 * (1 + assetIds.length)
+		optInParams.flatFee = true
+		temporaryComposer.addMethodCall({
+			appID: limitOrder.limitOrderAppId,
+			method: LimitOrderAppAPI.getMethod(USER_OPT_INTO_ASSETS),
+			sender: this.userAddress,
+			suggestedParams: optInParams,
+			signer: this.signer,
+			methodArgs: [minBalanceTxn],
+			onComplete: OnApplicationComplete.NoOpOC,
+		})
+		const txns = temporaryComposer.buildGroup().map((txnAndSigner) => txnAndSigner.txn)
+		txns[1].appForeignAssets = assetIds
+		delete(txns[0].group)
+		delete(txns[1].group)
+		composer.addTransaction({
+			txn: txns[0],
+			signer: this.signer
+		})
+		composer.addTransaction({
+			txn: txns[1],
+			signer: this.signer
+		})
 
 		// opt the escrow into the limit order app
 
