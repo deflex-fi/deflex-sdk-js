@@ -93,8 +93,53 @@ export default class DeflexLimitOrderFillerClient {
             params = await this.algod.getTransactionParams().do()
         }
         const composer = new AtomicTransactionComposer()
-        const protocolTreasuryAppId = ProtocolTreasuryAppAPI.getAppId(this.chain)
 
+        // opt creator treasury into output asset, if not opted in
+        const protocolTreasuryAppId = ProtocolTreasuryAppAPI.getAppId(this.chain)
+        const protocolTreasuryAppAddress = getApplicationAddress(protocolTreasuryAppId)
+        const protocolTreasuryOptedIntoOutput = await isOptedIntoAsset(this.algod, protocolTreasuryAppAddress, limitOrder.assetOutId)
+        if (!protocolTreasuryOptedIntoOutput) {
+            // payment transactions
+            const temporaryComposer = new AtomicTransactionComposer()
+            const fundingParams = {...params}
+            fundingParams.fee = 1000
+            fundingParams.flatFee = true
+            const fundingTxn = {
+                txn: makePaymentTxnWithSuggestedParamsFromObject({
+                    from: this.account.addr,
+                    suggestedParams: fundingParams,
+                    to: getApplicationAddress(protocolTreasuryAppId),
+                    amount: 100000,
+                    rekeyTo: undefined
+                }),
+                signer: this.signer,
+            }
+            // method call
+            let optInParams = {...params}
+            optInParams.fee = 2000
+            optInParams.flatFee = true
+            temporaryComposer.addMethodCall({
+                appID: protocolTreasuryAppId,
+                method: ProtocolTreasuryAppAPI.getMethod(USER_OPT_INTO_ASSETS),
+                sender: this.account.addr,
+                suggestedParams: optInParams,
+                signer: this.signer,
+                methodArgs: [fundingTxn],
+                onComplete: OnApplicationComplete.NoOpOC,
+            })
+            const txns = temporaryComposer.buildGroup().map((txnAndSigner) => txnAndSigner.txn)
+            txns[1].appForeignAssets = [limitOrder.assetOutId]
+            delete(txns[0].group)
+            delete(txns[1].group)
+            composer.addTransaction({
+                txn: txns[0],
+                signer: this.signer
+            })
+            composer.addTransaction({
+                txn: txns[1],
+                signer: this.signer
+            })
+        }
         // signal to limit order app that the order is being processed
         const initializeParams = {...params}
         initializeParams.fee = 2000
