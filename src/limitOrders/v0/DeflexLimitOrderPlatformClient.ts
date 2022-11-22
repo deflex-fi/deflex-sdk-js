@@ -30,8 +30,14 @@ import LimitOrderAppAPI, {
 	USER_OPT_OUT_ASSETS
 } from "./limitOrderAppAPI";
 import LimitOrderParams from "./LimitOrderParams";
-import {ALGO_ASSET_ID, CHAIN_MAINNET, CHAIN_TESTNET} from "../../constants";
+import {
+	ALGO_ASSET_ID,
+	CHAIN_MAINNET,
+	CHAIN_TESTNET
+} from "../../constants";
 import RegistryAppAPI, {BACKEND_CLOSE_ESCROW} from "./registryAppAPI";
+import {isOptedIntoAsset} from "./util";
+import ProtocolTreasuryAppAPI from "./protocolTreasuryAppAPI";
 
 export default class DeflexLimitOrderPlatformClient {
 
@@ -129,6 +135,55 @@ export default class DeflexLimitOrderPlatformClient {
 		const escrowAccount = generateAccount()
 		limitOrder.escrowAddress = escrowAccount.addr
 		const escrowSigner = makeBasicAccountTransactionSigner(escrowAccount)
+
+		const protocolTreasuryAppId = ProtocolTreasuryAppAPI.getAppId(this.chain)
+		const protocolTreasuryAddress = getApplicationAddress(protocolTreasuryAppId)
+		const protocolTreasuryOptedIntoOutput = await isOptedIntoAsset(this.algod, protocolTreasuryAddress, limitOrder.assetOutId)
+
+
+		// opt protocol treasury into output
+		if (!protocolTreasuryOptedIntoOutput) {
+			// payment transactions
+			const temporaryComposer = new AtomicTransactionComposer()
+			const fundingParams = {...params}
+			fundingParams.fee = 1000
+			fundingParams.flatFee = true
+			const fundingTxn = {
+				txn: makePaymentTxnWithSuggestedParamsFromObject({
+					from: limitOrder.userAddress,
+					suggestedParams: fundingParams,
+					to: protocolTreasuryAddress,
+					amount: 100000,
+					rekeyTo: undefined
+				}),
+				signer: this.signer,
+			}
+			// method call
+			let optInParams = {...params}
+			optInParams.fee = 2000
+			optInParams.flatFee = true
+			temporaryComposer.addMethodCall({
+				appID: protocolTreasuryAppId,
+				method: ProtocolTreasuryAppAPI.getMethod(USER_OPT_INTO_ASSETS),
+				sender: limitOrder.userAddress,
+				suggestedParams: optInParams,
+				signer: this.signer,
+				methodArgs: [fundingTxn],
+				onComplete: OnApplicationComplete.NoOpOC,
+			})
+			const txns = temporaryComposer.buildGroup().map((txnAndSigner) => txnAndSigner.txn)
+			txns[1].appForeignAssets = [limitOrder.assetOutId]
+			delete (txns[0].group)
+			delete (txns[1].group)
+			composer.addTransaction({
+				txn: txns[0],
+				signer: this.signer
+			})
+			composer.addTransaction({
+				txn: txns[1],
+				signer: this.signer
+			})
+		}
 
 		// fund the escrow
 
