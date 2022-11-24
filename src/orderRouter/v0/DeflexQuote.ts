@@ -5,6 +5,10 @@ import DeflexRoute from "./DeflexRoute";
 
 export default class DeflexQuote {
     public quote: Number|null
+    public fromASAID: Number
+    public toASAID: Number
+    public type: string
+    public amountIn: Number
     public profitAmount: Number|null
     public profitASAID: Number|null
     public priceBaseline: Number|null
@@ -16,6 +20,10 @@ export default class DeflexQuote {
     public flattenedRoute: {[key: string]: Number}
 
     constructor(quote,
+                fromASAID,
+                toASAID,
+                type,
+                amount,
                 profitAmount,
                 profitASAID,
                 priceBaseline,
@@ -26,6 +34,10 @@ export default class DeflexQuote {
                 protocolFees,
                 flattenedRoute) {
         this.quote = quote
+        this.fromASAID = fromASAID
+        this.toASAID = toASAID
+        this.type = type
+        this.amountIn = amount
         this.profitAmount = profitAmount
         this.profitASAID = profitASAID
         this.priceBaseline = priceBaseline
@@ -37,9 +49,17 @@ export default class DeflexQuote {
         this.flattenedRoute = flattenedRoute
     }
 
-    static fromAPIResponse(apiResponse) : DeflexQuote {
+    static fromAPIResponse(type: string,
+                           fromASAID: Number,
+                           toASAID: Number,
+                           amount: Number,
+                           apiResponse) : DeflexQuote {
         return new DeflexQuote(
             apiResponse.quote === '' ? null : parseFloat(apiResponse.quote),
+            fromASAID,
+            toASAID,
+            type,
+            amount,
             apiResponse.quote === '' ? null : apiResponse.profit.amount,
             apiResponse.quote === '' ? null : apiResponse.profit.asa.id,
             apiResponse.quote === '' ? null : apiResponse.priceBaseline,

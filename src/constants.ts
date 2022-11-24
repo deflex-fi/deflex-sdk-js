@@ -12,6 +12,13 @@ export const FETCH_EXECUTE_SWAP_TXNS_API = 'fetchExecuteSwapTxns'
 export const ORDER_ROUTER_DEFAULT_FEE_BPS = 4
 export const DEFAULT_MAX_GROUP_SIZE = 16
 
+export const DEFLEX_FIXED_FEE_TXN_NOTE = 'deflex-fixed-fee'
+
+export const ORDER_ROUTER_APP_IDS = {
+    [CHAIN_MAINNET]: 951874839,
+    [CHAIN_TESTNET]: 145324831,
+}
+
 // LIMIT ORDERS
 export const PROTOCOL_TREASURY_APP_IDS = {
     [CHAIN_MAINNET]: 949203488,

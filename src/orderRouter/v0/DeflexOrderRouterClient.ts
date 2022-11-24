@@ -1,14 +1,17 @@
 import axios from "axios";
 import DeflexQuote from "./DeflexQuote";
 import DeflexTransactionGroup from "./DeflexTransactionGroup";
-import {CHAIN_MAINNET,
+import {
+	CHAIN_MAINNET,
 	CHAIN_TESTNET,
 	TYPE_FIXED_INPUT,
 	TYPE_FIXED_OUTPUT,
 	FETCH_QUOTE_API,
 	FETCH_EXECUTE_SWAP_TXNS_API,
 	ORDER_ROUTER_DEFAULT_FEE_BPS,
-	DEFAULT_MAX_GROUP_SIZE} from "../../constants";
+	DEFAULT_MAX_GROUP_SIZE
+} from "../../constants";
+import {performSafetyChecks} from "./safetyChecks";
 
 export default class DeflexOrderRouterClient {
 
@@ -63,17 +66,22 @@ export default class DeflexOrderRouterClient {
 			feeBps: this.feeBps,
 			atomicOnly: atomicOnly,
 		})
-		return DeflexQuote.fromAPIResponse(quote)
+		return DeflexQuote.fromAPIResponse(type, fromASAId, toASAId, amount, quote)
 	}
 
-	async getSwapQuoteTransactions(address, txnPayload, slippage) : Promise<DeflexTransactionGroup> {
+	async getSwapQuoteTransactions(address: string, quote: DeflexQuote, slippage: Number) : Promise<DeflexTransactionGroup> {
 		const swapQuoteTransactionsData = await fetchApiData(FETCH_EXECUTE_SWAP_TXNS_API, {
 			address: address,
-			txnPayloadJSON: txnPayload,
+			txnPayloadJSON: quote.txnPayload,
 			slippage: slippage,
 			apiKey: this.apiKey
 		}, true)
-		return DeflexTransactionGroup.fromApiResponse(swapQuoteTransactionsData)
+		const txnGroup = DeflexTransactionGroup.fromApiResponse(swapQuoteTransactionsData)
+
+		// assert safety checks
+		performSafetyChecks(txnGroup, address, quote, slippage, this.chain)
+
+		return txnGroup
 	}
 }
 
