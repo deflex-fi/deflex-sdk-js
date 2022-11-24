@@ -25,7 +25,7 @@ async function run() {
 				.do();
 		}
 	}
-	const txnGroup = await client.getSwapQuoteTransactions(sender.addr, quote.txnPayload, 5)
+	const txnGroup = await client.getSwapQuoteTransactions(sender.addr, quote, 5)
 
 	const signedTxns = txnGroup.txns.map((txn) => {
 		if (txn.logicSigBlob !== false) {
