@@ -1,13 +1,23 @@
-import {decodeUint64, decodeUnsignedTransaction, encodeAddress, TransactionType} from "algosdk";
-import {DEFLEX_FIXED_FEE_TXN_NOTE, ORDER_ROUTER_APP_IDS, TYPE_FIXED_INPUT, TYPE_FIXED_OUTPUT} from "../../constants";
+import {Algodv2, decodeUint64, decodeUnsignedTransaction, encodeAddress, TransactionType} from "algosdk";
+import {
+    DEFLEX_FIXED_FEE_TXN_NOTE,
+    DEFLEX_MANAGER_ADDRESS,
+    LEGACY_ORDER_ROUTER_APP_IDS,
+    TYPE_FIXED_INPUT,
+    TYPE_FIXED_OUTPUT
+} from "../../constants";
 import DeflexTransactionGroup from "./DeflexTransactionGroup";
 import DeflexQuote from "./DeflexQuote";
 
-export function performSafetyChecks(transactionGroup: DeflexTransactionGroup,
-                                    address: string,
-                                    quote: DeflexQuote,
-                                    slippage: Number,
-                                    chain: string) : void {
+export async function performSafetyChecks(algod: Algodv2,
+                                          transactionGroup: DeflexTransactionGroup,
+                                          address: string,
+                                          quote: DeflexQuote,
+                                          slippage: Number,
+                                          chain: string): Promise<void> {
+
+    const deflexManagerAccountInfo = await algod.accountInformation(DEFLEX_MANAGER_ADDRESS).do()
+    const deflexCreatedAppIds = deflexManagerAccountInfo['created-apps'].map(app => app.id)
 
     const txns = transactionGroup.txns.map((deflexTxn) =>
         decodeUnsignedTransaction(new Uint8Array(Buffer.from(deflexTxn.data, 'base64'))))
@@ -59,7 +69,7 @@ export function performSafetyChecks(transactionGroup: DeflexTransactionGroup,
     // OUTPUT safety checks
 
     // loop over each txn group and make sure they go to a known protocol
-    const deflexOrderRouterAppId = ORDER_ROUTER_APP_IDS[chain]
+    const legacyDeflexOrderRouterAppId = LEGACY_ORDER_ROUTER_APP_IDS[chain]
 
     let receivedAmountSum = 0
 
@@ -77,7 +87,7 @@ export function performSafetyChecks(transactionGroup: DeflexTransactionGroup,
     // sum order router finalize
     txns.filter((txn) => {
         return encodeAddress(txn.from.publicKey) === address &&
-            txn.appIndex === deflexOrderRouterAppId &&
+            (txn.appIndex === legacyDeflexOrderRouterAppId || deflexCreatedAppIds.includes(txn.appIndex)) &&
             txn.appArgs.length > 0 &&
             Buffer.from((new TextDecoder()).decode(txn.appArgs[0])).toString('base64') === '77+9MO+/vR8=' && // finalize
             txn.appForeignAssets[decodeUint64(txn.appArgs[2], 'safe')] === quote.toASAID && // output is to ASA

@@ -12,6 +12,7 @@ import {
 	DEFAULT_MAX_GROUP_SIZE
 } from "../../constants";
 import {performSafetyChecks} from "./safetyChecks";
+import {Algodv2} from "algosdk";
 
 export default class DeflexOrderRouterClient {
 
@@ -79,7 +80,7 @@ export default class DeflexOrderRouterClient {
 		const txnGroup = DeflexTransactionGroup.fromApiResponse(swapQuoteTransactionsData)
 
 		// assert safety checks
-		performSafetyChecks(txnGroup, address, quote, slippage, this.chain)
+		await performSafetyChecks(new Algodv2(this.algodToken, this.algodUri, this.algodPort), txnGroup, address, quote, slippage, this.chain)
 
 		return txnGroup
 	}
