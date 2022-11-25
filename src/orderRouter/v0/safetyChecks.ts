@@ -86,12 +86,13 @@ export async function performSafetyChecks(algod: Algodv2,
 
     // sum order router finalize
     txns.filter((txn) => {
-        return encodeAddress(txn.from.publicKey) === address &&
-            (txn.appIndex === legacyDeflexOrderRouterAppId || deflexCreatedAppIds.includes(txn.appIndex)) &&
+        return (txn.appIndex === legacyDeflexOrderRouterAppId || deflexCreatedAppIds.includes(txn.appIndex)) &&
             txn.appArgs.length > 0 &&
             Buffer.from((new TextDecoder()).decode(txn.appArgs[0])).toString('base64') === '77+9MO+/vR8=' && // finalize
             txn.appForeignAssets[decodeUint64(txn.appArgs[2], 'safe')] === quote.toASAID && // output is to ASA
-            decodeUint64(txn.appArgs[5], 'safe') === 0 // beneficiary is sender
+            // beneficiary is user
+            ((Number(decodeUint64(txn.appArgs[5], 'safe')) === 0 && encodeAddress(txn.from.publicKey) === address) ||
+                encodeAddress(txn.appAccounts[decodeUint64(txn.appArgs[5], 'safe') - 1].publicKey) === address)
     }).map(txn => {
         receivedAmountSum += decodeUint64(txn.appArgs[3], 'safe')
     })
