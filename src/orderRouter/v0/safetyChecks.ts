@@ -78,7 +78,7 @@ export async function performSafetyChecks(algod: Algodv2,
         if (!txn.to || encodeAddress(txn.to.publicKey) !== address) {
             return false
         }
-        return (quote.fromASAID === 0 && txn.type === TransactionType.pay) ||
+        return (quote.toASAID === 0 && txn.type === TransactionType.pay) ||
             (quote.toASAID === txn.assetIndex && txn.type === TransactionType.axfer)
     }).map(txn => {
         receivedAmountSum += Number(txn.amount)
