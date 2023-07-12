@@ -5,7 +5,7 @@ async function run() {
 	const token = ''
 	const uri = 'https://node.testnet.algoexplorerapi.io'
 	const sender = algosdk.mnemonicToSecretKey('bottom stone elegant just symbol bunker review curve laugh burden jewel pepper replace north tornado alert relief wrist better property spider picture insect abandon tuna')
-	const client = deflex.DeflexOrderRouterClient.fetchTestnetClient(uri, token, '', sender.addr)
+	const client = deflex.DeflexOrderRouterClient.fetchTestnetClient(uri, token, '')
 	const quote = await client.getFixedInputSwapQuote(0, 10458941, 1000000)
 	const algod = new algosdk.Algodv2(token, uri, '')
 	const params = await algod.getTransactionParams().do()
