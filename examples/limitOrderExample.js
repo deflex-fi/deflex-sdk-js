@@ -7,17 +7,17 @@ const {
 
 function createAlgodClient(chain = deflex.constants.CHAIN_TESTNET) {
 	if (chain === deflex.constants.CHAIN_MAINNET) {
-		return new Algodv2('', 'https://node.algoexplorerapi.io', '')
+		return new Algodv2('', 'https://mainnet-api.algonode.cloud', '')
 	} else if (chain === deflex.constants.CHAIN_TESTNET) {
-		return new Algodv2('', 'https://node.testnet.algoexplorerapi.io', '')
+		return new Algodv2('', 'https://testnet-api.algonode.cloud', '')
 	}
 }
 
 function createIndexerClient(chain = deflex.constants.CHAIN_TESTNET) {
 	if (chain === deflex.constants.CHAIN_MAINNET) {
-		return new Indexer('', 'https://algoindexer.algoexplorerapi.io', '')
+		return new Indexer('', 'https://mainnet-idx.algonode.cloud', '')
 	} else if (chain === deflex.constants.CHAIN_TESTNET) {
-		return new Indexer('', 'https://algoindexer.testnet.algoexplorerapi.io', '')
+		return new Indexer('', 'https://testnet-idx.algonode.cloud', '')
 	}
 }
 
@@ -39,6 +39,7 @@ async function optAccountIntoAsset(algodClient, userPk, userSk, assetId) {
 }
 
 async function run() {
+	const protocolVersion = 1;
 	const chain = deflex.constants.CHAIN_TESTNET
 	const algodClient = createAlgodClient(chain)
 	const indexer = createIndexerClient(chain)
@@ -47,8 +48,8 @@ async function run() {
 	const userMnemonic = 'bottom stone elegant just symbol bunker review curve laugh burden jewel pepper replace north tornado alert relief wrist better property spider picture insect abandon tuna'
 	const userAccount = mnemonicToSecretKey(userMnemonic)
 
-	const platformClient = new deflex.DeflexLimitOrderPlatformClient(algodClient, chain, userAddress, userMnemonic)
-	const fillerClient = new deflex.DeflexLimitOrderFillerClient(algodClient, chain, userMnemonic)
+	const platformClient = new deflex.DeflexLimitOrderPlatformClient(algodClient, chain, userAddress, userMnemonic, protocolVersion)
+	const fillerClient = new deflex.DeflexLimitOrderFillerClient(algodClient, chain, userMnemonic, protocolVersion)
 
 	console.log('Check if a limit-order app exists')
 	let limitOrderAppIds = await platformClient.getLimitOrderAppIds()
@@ -70,7 +71,7 @@ async function run() {
 	const limitOrderAppId = limitOrderAppIds[limitOrderAppIds.length - 1]
 
 	// define limit order with ALGO/WALGO-TS
-	const inputAssetId = deflex.constants.ALGO_ASSET_ID
+	const inputAssetId =  deflex.constants.ALGO_ASSET_ID// 14704676
 	const outputAssetId = 14704676
 	const inputAmount = 1000000
 	const outputAmount = 20000
@@ -86,7 +87,7 @@ async function run() {
 	}
 
 	console.log('Fetching all open limit orders')
-	const openOrders = await deflex.DeflexLimitOrderFillerClient.fetchAllOpenOrders(indexer, chain)
+	const openOrders = await deflex.DeflexLimitOrderFillerClient.fetchAllOpenOrders(indexer, chain, protocolVersion)
 
 	for (let i = 0; i < openOrders.length; i++) {
 		console.log(`There's an open limit order with address ${openOrders[i].escrowAddress}`)
@@ -99,7 +100,7 @@ async function run() {
 			userAddress,
 			userAddress,
 			limitOrderAppId,
-			deflex.RegistryAppAPI.getAppId(chain),
+			deflex.RegistryAppAPI.getAppId(chain, protocolVersion),
 			userAddress,
 			inputAssetId,
 			outputAssetId,

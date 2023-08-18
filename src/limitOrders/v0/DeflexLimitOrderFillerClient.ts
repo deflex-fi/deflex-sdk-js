@@ -5,7 +5,7 @@ import {
     mnemonicToSecretKey, OnApplicationComplete, SuggestedParams,
     TransactionSigner, TransactionWithSigner
 } from "algosdk";
-import {CHAIN_MAINNET, CHAIN_TESTNET} from "../../constants";
+import {CHAIN_MAINNET, CHAIN_TESTNET, PROTOCOL_VERSION_0, PROTOCOL_VERSION_1} from "../../constants";
 import RegistryAppAPI, {BACKEND_CLOSE_ESCROW} from "./registryAppAPI";
 import LimitOrderParams from "./LimitOrderParams";
 import {getStateBytes, getStateInt, isOptedIntoAsset} from "./util";
@@ -19,30 +19,32 @@ export default class DeflexLimitOrderFillerClient {
     chain: string
     account: Account
     signer: TransactionSigner
+    protocolVersion: number
 
-    constructor(algod: Algodv2, chain: string, signerMnemonic: string) {
+    constructor(algod: Algodv2, chain: string, signerMnemonic: string, protocolVersion: number) {
         this.algod = algod
         this.chain = chain
         this.account = mnemonicToSecretKey(signerMnemonic)
+        this.protocolVersion = protocolVersion
         this.signer = makeBasicAccountTransactionSigner(this.account)
     }
 
-    static fetchMainnetClient(algod: Algodv2, signerPrivateKey: string): DeflexLimitOrderFillerClient {
-        return new this(algod, CHAIN_MAINNET, signerPrivateKey)
+    static fetchMainnetClient(algod: Algodv2, signerPrivateKey: string, protocolVersion: number): DeflexLimitOrderFillerClient {
+        return new this(algod, CHAIN_MAINNET, signerPrivateKey, protocolVersion)
     }
 
-    static fetchTestnetClient(algod: Algodv2, signerPrivateKey: string): DeflexLimitOrderFillerClient {
-        return new this(algod, CHAIN_TESTNET, signerPrivateKey)
+    static fetchTestnetClient(algod: Algodv2, signerPrivateKey: string,  protocolVersion: number): DeflexLimitOrderFillerClient {
+        return new this(algod, CHAIN_TESTNET, signerPrivateKey, protocolVersion)
     }
 
-    static async fetchAllOpenOrders(indexer: Indexer, chain: string, registryAppId?: number) : Promise<LimitOrderParams[]> {
-        const limitOrders = await fetchAllOrders(indexer, chain, registryAppId)
+    static async fetchAllOpenOrders(indexer: Indexer, chain: string, protocolVersion: number) : Promise<LimitOrderParams[]> {
+        const limitOrders = await fetchAllOrders(indexer, chain, protocolVersion)
         const now = (new Date()).getTime() / 1000
         return limitOrders.filter((order) => now <= order.expirationDate)
     }
 
-    static async fetchAllExpiredOrders(indexer: Indexer, chain: string, registryAppId?: number): Promise<LimitOrderParams[]> {
-        const limitOrders = await fetchAllOrders(indexer, chain, registryAppId)
+    static async fetchAllExpiredOrders(indexer: Indexer, chain: string, protocolVersion: number): Promise<LimitOrderParams[]> {
+        const limitOrders = await fetchAllOrders(indexer, chain, protocolVersion)
         const now = (new Date()).getTime() / 1000
         return limitOrders.filter((order) => now > order.expirationDate)
     }
@@ -204,10 +206,10 @@ export default class DeflexLimitOrderFillerClient {
     }
 }
 
-async function fetchAllOrders(indexer: Indexer, chain: string, registryAppId ?: number):
+async function fetchAllOrders(indexer: Indexer, chain: string, protocolVersion: number, registryAppId ?: number):
     Promise<LimitOrderParams[]> {
     if (!registryAppId) {
-        registryAppId = RegistryAppAPI.getAppId(chain)
+        registryAppId = RegistryAppAPI.getAppId(chain, protocolVersion)
     }
     let accounts = []
     let nextToken = null

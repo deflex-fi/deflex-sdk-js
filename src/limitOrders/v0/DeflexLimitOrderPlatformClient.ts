@@ -30,7 +30,7 @@ import LimitOrderAppAPI, {
 	USER_OPT_OUT_ASSETS
 } from "./limitOrderAppAPI";
 import LimitOrderParams from "./LimitOrderParams";
-import {ALGO_ASSET_ID, CHAIN_MAINNET, CHAIN_TESTNET} from "../../constants";
+import {ALGO_ASSET_ID, CHAIN_MAINNET, CHAIN_TESTNET, PROTOCOL_VERSION_1} from "../../constants";
 import RegistryAppAPI, {BACKEND_CLOSE_ESCROW} from "./registryAppAPI";
 
 export default class DeflexLimitOrderPlatformClient {
@@ -40,22 +40,24 @@ export default class DeflexLimitOrderPlatformClient {
 	userAddress: string
 	userPrivateKey: string
 	signer: TransactionSigner
+	protocolVersion: number
 
-	constructor(algod: Algodv2, chain: string, userAddress: string, userMnemonic: string) {
+	constructor(algod: Algodv2, chain: string, userAddress: string, userMnemonic: string, protocolVersion: number) {
 		this.algod = algod
 		this.chain = chain
 		this.userAddress = userAddress
 		this.userPrivateKey = userMnemonic
+		this.protocolVersion = protocolVersion
 		const account = mnemonicToSecretKey(userMnemonic)
 		this.signer = makeBasicAccountTransactionSigner(account)
 	}
 
-	static fetchMainnetClient(algod: Algodv2, userAddress: string, userPrivateKey: string) : DeflexLimitOrderPlatformClient {
-		return new this(algod, CHAIN_MAINNET, userAddress, userPrivateKey)
+	static fetchMainnetClient(algod: Algodv2, userAddress: string, userPrivateKey: string, protocolVersion: number) : DeflexLimitOrderPlatformClient {
+		return new this(algod, CHAIN_MAINNET, userAddress, userPrivateKey, protocolVersion)
 	}
 
-	static fetchTestnetClient(algod: Algodv2, userAddress: string, userPrivateKey: string) : DeflexLimitOrderPlatformClient {
-		return new this(algod, CHAIN_TESTNET, userAddress, userPrivateKey)
+	static fetchTestnetClient(algod: Algodv2, userAddress: string, userPrivateKey: string, protocolVersion: number) : DeflexLimitOrderPlatformClient {
+		return new this(algod, CHAIN_TESTNET, userAddress, userPrivateKey, protocolVersion)
 	}
 
 	static getMinimumEscrowBalance() : number {
@@ -73,7 +75,7 @@ export default class DeflexLimitOrderPlatformClient {
 				from: this.userAddress,
 				suggestedParams: params,
 				onComplete: OnApplicationComplete.NoOpOC,
-				approvalProgram: LimitOrderApp.approvalProgramBytes(this.chain),
+				approvalProgram: LimitOrderApp.approvalProgramBytes(this.chain, this.protocolVersion),
 				clearProgram: LimitOrderApp.clearStateProgramBytes(this.chain),
 				numLocalInts: LOCAL_STATE_INTS,
 				numLocalByteSlices: LOCAL_STATE_BYTES,
@@ -386,7 +388,7 @@ export default class DeflexLimitOrderPlatformClient {
 
 	async getLimitOrderAppIds(): Promise<number[]> {
 		let result = []
-		const expectedApprovalBytes = LimitOrderApp.approvalProgramBytes(this.chain)
+		const expectedApprovalBytes = LimitOrderApp.approvalProgramBytes(this.chain, this.protocolVersion)
 		const expectedClearBytes = LimitOrderApp.clearStateProgramBytes(this.chain)
 		const accountInfo = await this.algod.accountInformation(this.userAddress).do()
 		const createdApps = accountInfo['created-apps']

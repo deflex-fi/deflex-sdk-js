@@ -1,4 +1,4 @@
-import {REGISTRY_APP_IDS} from "../../constants";
+import {REGISTRY_APP_IDS_BY_VERSION} from "../../constants";
 import Api from "./api";
 import {ABIContract} from "algosdk";
 
@@ -71,8 +71,8 @@ const __contract = {
 
 export default class RegistryAppAPI {
 
-    static getAppId(chain: string) {
-        return REGISTRY_APP_IDS[chain]
+    static getAppId(chain: string, protocolVersion: number) {
+        return REGISTRY_APP_IDS_BY_VERSION[chain][protocolVersion]
     }
 
     static getMethod(name: string) {
