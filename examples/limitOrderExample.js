@@ -48,8 +48,12 @@ async function run() {
 	const userMnemonic = 'bottom stone elegant just symbol bunker review curve laugh burden jewel pepper replace north tornado alert relief wrist better property spider picture insect abandon tuna'
 	const userAccount = mnemonicToSecretKey(userMnemonic)
 
-	const platformClient = new deflex.DeflexLimitOrderPlatformClient(algodClient, chain, userAddress, userMnemonic, protocolVersion)
+	const platformClient = new deflex.DeflexLimitOrderPlatformClient(algodClient, indexer, chain, userAddress, userMnemonic, protocolVersion)
 	const fillerClient = new deflex.DeflexLimitOrderFillerClient(algodClient, chain, userMnemonic, protocolVersion)
+
+	console.log('Listing filled order count (first page)')
+	const orders = await platformClient.fetchFilledOrders()
+	console.log(`${orders.orders.length} filled orders.`)
 
 	console.log('Check if a limit-order app exists')
 	let limitOrderAppIds = await platformClient.getLimitOrderAppIds()

@@ -1,8 +1,10 @@
 import {
 	Algodv2,
 	AtomicTransactionComposer,
+	encodeAddress,
 	generateAccount,
 	getApplicationAddress,
+	Indexer,
 	makeApplicationCreateTxnFromObject, makeApplicationDeleteTxnFromObject,
 	makeApplicationOptInTxnFromObject,
 	makeAssetTransferTxnWithSuggestedParamsFromObject,
@@ -30,20 +32,23 @@ import LimitOrderAppAPI, {
 	USER_OPT_OUT_ASSETS
 } from "./limitOrderAppAPI";
 import LimitOrderParams from "./LimitOrderParams";
-import {ALGO_ASSET_ID, CHAIN_MAINNET, CHAIN_TESTNET, PROTOCOL_VERSION_1} from "../../constants";
+import {ALGO_ASSET_ID, CHAIN_MAINNET, CHAIN_TESTNET, PROTOCOL_VERSION_1, REGISTRY_APP_IDS_BY_VERSION} from "../../constants";
 import RegistryAppAPI, {BACKEND_CLOSE_ESCROW} from "./registryAppAPI";
+import { getStateBytes, getStateInt } from "./util";
 
 export default class DeflexLimitOrderPlatformClient {
 
 	algod: Algodv2
+	indexer: Indexer
 	chain: string
 	userAddress: string
 	userPrivateKey: string
 	signer: TransactionSigner
 	protocolVersion: number
 
-	constructor(algod: Algodv2, chain: string, userAddress: string, userMnemonic: string, protocolVersion: number) {
+	constructor(algod: Algodv2, indexer: Indexer, chain: string, userAddress: string, userMnemonic: string, protocolVersion: number) {
 		this.algod = algod
+		this.indexer = indexer
 		this.chain = chain
 		this.userAddress = userAddress
 		this.userPrivateKey = userMnemonic
@@ -52,12 +57,12 @@ export default class DeflexLimitOrderPlatformClient {
 		this.signer = makeBasicAccountTransactionSigner(account)
 	}
 
-	static fetchMainnetClient(algod: Algodv2, userAddress: string, userPrivateKey: string, protocolVersion: number) : DeflexLimitOrderPlatformClient {
-		return new this(algod, CHAIN_MAINNET, userAddress, userPrivateKey, protocolVersion)
+	static fetchMainnetClient(algod: Algodv2, indexer: Indexer, userAddress: string, userPrivateKey: string, protocolVersion: number) : DeflexLimitOrderPlatformClient {
+ 		return new this(algod, indexer, CHAIN_MAINNET, userAddress, userPrivateKey, protocolVersion)
 	}
 
-	static fetchTestnetClient(algod: Algodv2, userAddress: string, userPrivateKey: string, protocolVersion: number) : DeflexLimitOrderPlatformClient {
-		return new this(algod, CHAIN_TESTNET, userAddress, userPrivateKey, protocolVersion)
+	static fetchTestnetClient(algod: Algodv2, indexer: Indexer, userAddress: string, userPrivateKey: string, protocolVersion: number) : DeflexLimitOrderPlatformClient {
+		return new this(algod, indexer, CHAIN_TESTNET, userAddress, userPrivateKey, protocolVersion)
 	}
 
 	static getMinimumEscrowBalance() : number {
@@ -65,6 +70,48 @@ export default class DeflexLimitOrderPlatformClient {
 		balance += 100000 // to opt into registry app
 		balance += MINIMUM_BALANCE_FOR_OPT_IN
 		return balance
+	}
+
+	async fetchFilledOrders(nextToken?: string) {
+		const registryAppId = REGISTRY_APP_IDS_BY_VERSION[this.chain][this.protocolVersion]
+		let indexerQuery = this.indexer.searchForTransactions().applicationID(registryAppId)
+		if (nextToken) {
+			indexerQuery = indexerQuery.nextToken(nextToken)
+		}
+
+ 		const txnsResponse = await indexerQuery.do()
+		const nextTokenToReturn = txnsResponse['next-token']
+		const txns = txnsResponse['transactions']
+		const filteredTxns = txns.filter(txn => txn['application-transaction'] && txn['application-transaction']['application-args'][0] === 'Ai+ORg==')
+		const orders = filteredTxns.map(txn => {
+			const delta = txn['local-state-delta'][0]['delta']
+			let limitOrderState = {}
+			for (let j = 0; j < delta.length; j++) {
+				const keyValue = delta[j]
+				limitOrderState[keyValue['key']] = keyValue['value']
+			}
+			return new LimitOrderParams(
+				encodeAddress(getStateBytes(limitOrderState, 'user_address')),
+				encodeAddress(getStateBytes(limitOrderState, 'beneficiary_address')),
+				txn['application-transaction']['application-id'],
+				getStateInt(limitOrderState, 'registry_app_id'),
+				encodeAddress(getStateBytes(limitOrderState, 'platform_treasury_address')),
+				getStateInt(limitOrderState, 'asset_in_id'),
+				getStateInt(limitOrderState, 'asset_out_id'),
+				getStateInt(limitOrderState, 'amount_in'),
+				getStateInt(limitOrderState, 'amount_out'),
+				getStateInt(limitOrderState, 'expiration_date'),
+				'',
+				getStateInt(limitOrderState, 'fee_bps'),
+				encodeAddress(getStateBytes(limitOrderState, 'backend_address')),
+				encodeAddress(getStateBytes(limitOrderState, 'user_address'))
+			)
+		
+		})
+		return {
+			nextToken: nextTokenToReturn,
+			orders: orders
+		}
 	}
 
 	async prepareCreateLimitOrderApp() : Promise<AtomicTransactionComposer> {
