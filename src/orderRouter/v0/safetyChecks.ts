@@ -48,7 +48,8 @@ export async function performSafetyChecks(algod: Algodv2,
         }
 
         // check there are no unexpected payments or asset transfers
-        if (txn.type === TransactionType.axfer && quote.fromASAID !== txn.assetIndex) {
+        if (txn.type === TransactionType.axfer && quote.fromASAID !== txn.assetIndex && 
+            !(quote.toASAID === txn.assetIndex && txn.amount === 0)) {
             throw new Error('Unexpected asset transfer transaction!')
         }
         if (txn.type === TransactionType.pay && quote.fromASAID !== 0) {
