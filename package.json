@@ -20,7 +20,7 @@
     "build": "tsdx build"
   },
   "dependencies": {
-    "algosdk": "2.5.0",
+    "algosdk": "2.6.0",
     "axios": "^0.27.2"
   },
   "repository": {
