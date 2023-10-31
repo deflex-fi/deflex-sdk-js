@@ -85,9 +85,9 @@ export async function performSafetyChecks(algod: Algodv2,
         receivedAmountSum += Number(txn.amount)
     })
 
-    // sum order router finalize
+    // sum order router finalize (legacy)
     txns.filter((txn) => {
-        return (txn.appIndex === legacyDeflexOrderRouterAppId || deflexCreatedAppIds.includes(txn.appIndex)) &&
+        return (txn.appIndex === legacyDeflexOrderRouterAppId) &&
             txn.appArgs.length > 0 &&
             Buffer.from((new TextDecoder()).decode(txn.appArgs[0])).toString('base64') === '77+9MO+/vR8=' && // finalize
             txn.appForeignAssets[decodeUint64(txn.appArgs[2], 'safe')] === quote.toASAID && // output is to ASA
@@ -97,6 +97,21 @@ export async function performSafetyChecks(algod: Algodv2,
     }).map(txn => {
         receivedAmountSum += decodeUint64(txn.appArgs[3], 'safe')
     })
+
+    // sum order router finalize (new)
+    txns.filter((txn) => {
+		return (deflexCreatedAppIds.includes(txn.appIndex) && txn.appIndex !== legacyDeflexOrderRouterAppId) &&
+			txn.appArgs.length > 0 &&
+			Buffer.from((new TextDecoder()).decode(txn.appArgs[0])).toString('base64') === 'yJDvv70g' && // finalize
+			// beneficiary is user
+			((Number(decodeUint64(txn.appArgs[6], 'safe')) === 0 && encodeAddress(txn.from.publicKey) === address) ||
+				encodeAddress(txn.appAccounts[decodeUint64(txn.appArgs[6], 'safe') - 1].publicKey) === address)
+	}).map(txn => {
+		receivedAmountSum += decodeUint64(txn.appArgs[4], 'safe')
+	})
+
+
+    
 
     const expectedReceiveAmount = quote.type === TYPE_FIXED_OUTPUT ?
         quote.amountIn : Math.floor((Number(quote.quote) * (100 - Number(slippage))) / 100)
