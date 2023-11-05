@@ -12,7 +12,10 @@ import {
 	DEFAULT_MAX_GROUP_SIZE
 } from "../../constants";
 import {performSafetyChecks} from "./safetyChecks";
-import {Algodv2} from "algosdk";
+import {Algodv2, Indexer} from "algosdk";
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const TREASURY_ADDRESS = 'X6T7GOJILSI4T6XRP4ABFDYVXG5MQWRIMMYYUDK7VHTVMXSQVHK47AJ75Y'
 
 export default class DeflexOrderRouterClient {
 
@@ -84,6 +87,59 @@ export default class DeflexOrderRouterClient {
 
 		return txnGroup
 	}
+
+	async computeUniqueUserAndTransactionCount(daysBack: number) {
+		const daysBackTimestamp = Math.floor((new Date(Date.now() - daysBack * ONE_DAY_MS)).getTime() / 1000);
+		let lastRoundTime
+		let nextToken = null
+		const indexer = new Indexer(this.algodToken, this.algodUri, this.algodPort)
+		let users = {}
+		let txnCount = 0
+		do {
+			const result = await this._getUserAndTransactionCount(indexer, nextToken)
+			Object.keys(result.users).map((address) => {
+				users[address] = true
+			})
+			txnCount += result.transactionCount
+			lastRoundTime = result.roundTime
+			nextToken = result.nextToken
+		} while (lastRoundTime > daysBackTimestamp)
+		console.log(`unique users = ${Object.keys(users).length}`)
+		console.log(`unique swaps = ${txnCount}`)
+
+	}
+
+	async _getUserAndTransactionCount(indexer, nextToken: string) {
+		let indexerQuery = indexer.searchForTransactions().address(TREASURY_ADDRESS)
+		if (nextToken) {
+			indexerQuery = indexerQuery.nextToken(nextToken)
+		}
+
+		let users = {}
+		let txnCount = 0
+		let round = null
+		let roundTime = null
+ 		const txnsResponse = await indexerQuery.do()
+		const nextTokenToReturn = txnsResponse['next-token']
+		const txns = txnsResponse['transactions']
+		txns.map(txn => {
+  			const assetXferTxns = (txn['inner-txns'] || []).filter((innerTxn) => !!innerTxn['asset-transfer-transaction'] && !!innerTxn['asset-transfer-transaction']['close-to'])
+			if (assetXferTxns.length > 0) {
+				users[assetXferTxns[0]['asset-transfer-transaction']['close-to']] = true
+				txnCount++
+				round = assetXferTxns[0]['last-valid']
+				roundTime = assetXferTxns[0]['round-time']
+			}
+		})
+		return {
+			transactionCount: txnCount,
+			users: users,
+			nextToken: nextTokenToReturn,
+			round: round,
+			roundTime: roundTime
+		}
+	}
+
 }
 
 
