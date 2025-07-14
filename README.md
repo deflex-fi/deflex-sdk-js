@@ -1,25 +1,24 @@
 # Deflex SDK (Javascript)
+
 Deflex Javascript SDK for order routing and limit orders.
 
 ### Installation
 
-Run: `npm install @deflex/deflex-sdk-js`
-
+Run: `npm install @txnlab/deflex-sdk-js`
 
 ## Order Routing
-
 
 ### Fetch Deflex Quote
 
 To fetch an Deflex quote, initialize the client and use:
+
 - `getFixedInputSwapQuote` for a fixed input swap
 - `getFixedOutputSwapQuote` for a fixed output swap
-
 
 Example (for fixed input):
 
 ```
-import {DeflexOrderRouterClient} from 'deflex-sdk-js'
+import {DeflexOrderRouterClient} from '@txnlab/deflex-sdk-js'
 import algosdk from 'algosdk'
 
 const token = '<INSERT ALGOD TOKEN>'
@@ -50,7 +49,7 @@ for (let i = 0; i < requiredAppOptIns.length; i++) {
 
 ### Fetch Transaction Group for Executing Deflex Quote
 
-To fetch the transaction group for executing an Deflex quote, 
+To fetch the transaction group for executing an Deflex quote,
 use `getSwapQuoteTransactions`.
 
 Example (using quote from example above):
@@ -86,9 +85,3 @@ See `examples/limitOrderExample.js` for an example usage.
 To fill limit orders, create a `DeflexLimitOrderFillerClient`.
 
 See `examples/limitOrderExample.js` for an example usage.
-
-
-
-
-
-
