@@ -144,7 +144,7 @@ export default class DeflexOrderRouterClient {
 
 
 async function fetchApiData(api, params, usePost = false) {
-	let fullUrl = `https://api.deflex.fi/api/${api}?`
+	let fullUrl = `https://deflex.txnlab.dev/api/${api}?`
 	let quoteData
 	if (usePost) {
 		quoteData = await axios.post(fullUrl, params);
