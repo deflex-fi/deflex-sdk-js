@@ -1,41 +1,41 @@
 {
-  "name": "@deflex/deflex-sdk-js",
-  "version": "2.0.5",
-  "description": "Deflex JS SDK",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "files": [
-    "dist/"
-  ],
-  "keywords": [
-    "deflex",
-    "algorand",
-    "dex"
-  ],
-  "author": "Phil Gabardo",
-  "license": "MIT",
-  "scripts": {
-    "order-router-example": "node -e 'import(\"./examples/orderRouterExample.js\")'",
-    "limit-order-example": "node -e 'import(\"./examples/limitOrderExample.js\")'",
-    "build": "tsdx build"
-  },
-  "dependencies": {
-    "algosdk": "2.6.0",
-    "axios": "^0.27.2"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deflex-fi/deflex-sdk-js.git"
-  },
-  "directories": {
-    "example": "examples"
-  },
-  "types": "./dist/index.d.ts",
-  "bugs": {
-    "url": "https://github.com/deflex-fi/deflex-sdk-js/issues"
-  },
-  "homepage": "https://github.com/deflex-fi/deflex-sdk-js#readme",
-  "devDependencies": {
-    "tsdx": "^0.14.1"
-  }
+	"name": "@txnlab/deflex-sdk-js",
+	"version": "0.1.0",
+	"description": "Deflex JS SDK",
+	"main": "dist/index.js",
+	"module": "dist/index.js",
+	"files": [
+		"dist/"
+	],
+	"keywords": [
+		"deflex",
+		"algorand",
+		"dex"
+	],
+	"author": "Phil Gabardo",
+	"license": "MIT",
+	"scripts": {
+		"order-router-example": "node -e 'import(\"./examples/orderRouterExample.js\")'",
+		"limit-order-example": "node -e 'import(\"./examples/limitOrderExample.js\")'",
+		"build": "tsdx build"
+	},
+	"dependencies": {
+		"algosdk": "2.6.0",
+		"axios": "^0.27.2"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/deflex-fi/deflex-sdk-js.git"
+	},
+	"directories": {
+		"example": "examples"
+	},
+	"types": "./dist/index.d.ts",
+	"bugs": {
+		"url": "https://github.com/deflex-fi/deflex-sdk-js/issues"
+	},
+	"homepage": "https://github.com/deflex-fi/deflex-sdk-js#readme",
+	"devDependencies": {
+		"tsdx": "^0.14.1"
+	}
 }
