@@ -36,6 +36,7 @@
 	},
 	"homepage": "https://github.com/deflex-fi/deflex-sdk-js#readme",
 	"devDependencies": {
+		"@types/node": "^24.0.13",
 		"tsdx": "^0.14.1"
 	}
 }

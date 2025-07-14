@@ -15,6 +15,9 @@ importers:
         specifier: ^0.27.2
         version: 0.27.2
     devDependencies:
+      '@types/node':
+        specifier: ^24.0.13
+        version: 24.0.13
       tsdx:
         specifier: ^0.14.1
         version: 0.14.1(@types/babel__core@7.20.5)(@types/node@24.0.13)
@@ -6591,10 +6594,7 @@ snapshots:
       pretty-format: 25.5.0
       throat: 5.0.0
     transitivePeerDependencies:
-      - bufferutil
-      - canvas
       - supports-color
-      - utf-8-validate
 
   jest-leak-detector@25.5.0:
     dependencies:
