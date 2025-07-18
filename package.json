@@ -1,6 +1,6 @@
 {
 	"name": "@txnlab/deflex-sdk-js",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Deflex JS SDK",
 	"main": "dist/index.js",
 	"module": "dist/index.js",
