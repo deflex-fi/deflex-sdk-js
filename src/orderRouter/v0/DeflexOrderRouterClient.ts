@@ -4,18 +4,18 @@ import DeflexTransactionGroup from "./DeflexTransactionGroup";
 import {
 	CHAIN_MAINNET,
 	CHAIN_TESTNET,
-	TYPE_FIXED_INPUT,
-	TYPE_FIXED_OUTPUT,
-	FETCH_QUOTE_API,
+	DEFAULT_MAX_GROUP_SIZE,
 	FETCH_EXECUTE_SWAP_TXNS_API,
+	FETCH_QUOTE_API,
 	ORDER_ROUTER_DEFAULT_FEE_BPS,
-	DEFAULT_MAX_GROUP_SIZE
+	TREASURY_ADDRESS,
+	TYPE_FIXED_INPUT,
+	TYPE_FIXED_OUTPUT
 } from "../../constants";
-import {performSafetyChecks} from "./safetyChecks";
-import {Algodv2, Indexer} from "algosdk";
+import { performSafetyChecks } from "./safetyChecks";
+import { Algodv2, Indexer } from "algosdk";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const TREASURY_ADDRESS = 'X6T7GOJILSI4T6XRP4ABFDYVXG5MQWRIMMYYUDK7VHTVMXSQVHK47AJ75Y'
 
 export default class DeflexOrderRouterClient {
 

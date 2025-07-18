@@ -48,7 +48,7 @@ export async function performSafetyChecks(algod: Algodv2,
         }
 
         // check there are no unexpected payments or asset transfers
-        if (txn.type === TransactionType.axfer && quote.fromASAID !== txn.assetIndex && 
+        if (txn.type === TransactionType.axfer && quote.fromASAID !== txn.assetIndex &&
             !(quote.toASAID === txn.assetIndex && txn.amount === 0)) {
             throw new Error('Unexpected asset transfer transaction!')
         }
@@ -98,11 +98,13 @@ export async function performSafetyChecks(algod: Algodv2,
         receivedAmountSum += decodeUint64(txn.appArgs[3], 'safe')
     })
 
+    const argUserSwapFinalizeSelB64 = 'yJDcIA=='; // 0xC890DC20 (User_swap_finalize)
+
     // sum order router finalize (new)
     txns.filter((txn) => {
 		return (deflexCreatedAppIds.includes(txn.appIndex) && txn.appIndex !== legacyDeflexOrderRouterAppId) &&
 			txn.appArgs.length > 0 &&
-			Buffer.from((new TextDecoder()).decode(txn.appArgs[0])).toString('base64') === 'yJDvv70g' && // finalize
+			Buffer.from((new TextDecoder()).decode(txn.appArgs[0])).toString('base64') === argUserSwapFinalizeSelB64 && // finalize
 			// beneficiary is user
 			((Number(decodeUint64(txn.appArgs[6], 'safe')) === 0 && encodeAddress(txn.from.publicKey) === address) ||
 				encodeAddress(txn.appAccounts[decodeUint64(txn.appArgs[6], 'safe') - 1].publicKey) === address)
@@ -111,12 +113,10 @@ export async function performSafetyChecks(algod: Algodv2,
 	})
 
 
-    
-
     const expectedReceiveAmount = quote.type === TYPE_FIXED_OUTPUT ?
         quote.amountIn : Math.floor((Number(quote.quote) * (100 - Number(slippage))) / 100)
 
     if (receivedAmountSum < (Number(expectedReceiveAmount) - 1)) {
-        throw new Error(`Receives amount subceeds expected sent amount by ${Number(expectedReceiveAmount) - receivedAmountSum}!`)
+        throw new Error(`Receive amount was less than expected amount by ${Number(expectedReceiveAmount) - receivedAmountSum}!  Increase slippage or try again.`)
     }
 }

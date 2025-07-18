@@ -77,11 +77,12 @@ console.log(txId)
 
 ## Limit Orders
 
-To manage (create and cancel) limit orders, first create a `DeflexLimitOrderPlatformClient`
-and make sure a limit order application has been created for the user.
+(Limit Orders are currently disabled at the moment.  They may be reinstated in the future.)
 
-See `examples/limitOrderExample.js` for an example usage.
+~~To manage (create and cancel) limit orders, first create a `DeflexLimitOrderPlatformClient and make sure a limit order application has been created for the user.~~
 
-To fill limit orders, create a `DeflexLimitOrderFillerClient`.
+~~See `examples/limitOrderExample.js` for an example usage.~~
 
-See `examples/limitOrderExample.js` for an example usage.
+~~To fill limit orders, create a `DeflexLimitOrderFillerClient`.~~
+
+~~See `examples/limitOrderExample.js` for an example usage~~.
